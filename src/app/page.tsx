@@ -1,103 +1,160 @@
-import Image from "next/image";
+'use client';
+
+import { Box, Container, Grid, Heading, Spinner, Text, Center } from '@chakra-ui/react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import ProductCard from '@/components/ProductCard';
+import { Product } from '@/lib/api';
+import { useEffect, useRef, useCallback } from 'react';
+
+interface ProductResponse {
+  data: Product[];
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const observerTarget = useRef<HTMLDivElement>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteQuery<ProductResponse>({
+    queryKey: ['products'],
+    queryFn: async ({ pageParam = 1 }) => {
+      console.log('[Query] Fetching page:', pageParam);
+      const response = await fetch(`/api/products?page=${pageParam}&per_page=15`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to fetch products: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('[Query] API Response:', {
+        page: data.current_page,
+        total: data.total,
+        items: data.data?.length,
+        lastPage: data.last_page
+      });
+      return data;
+    },
+    getNextPageParam: (lastPage) => {
+      // Enhanced debug logging
+      console.log('[Pagination] Processing page:', {
+        currentPage: lastPage?.current_page,
+        lastPage: lastPage?.last_page,
+        itemsInPage: lastPage?.data?.length,
+        hasMore: lastPage?.current_page < lastPage?.last_page
+      });
+      
+      if (!lastPage?.data?.length) {
+        console.log('[Pagination] No items in page');
+        return undefined;
+      }
+
+      const nextPage = lastPage.current_page < lastPage.last_page 
+        ? lastPage.current_page + 1 
+        : undefined;
+
+      console.log('[Pagination] Next page will be:', nextPage);
+      return nextPage;
+    },
+    initialPageParam: 1
+  });
+
+  const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
+    const [entry] = entries;
+    console.log('[Observer] Intersection:', {
+      isIntersecting: entry.isIntersecting,
+      hasNextPage,
+      isFetchingNextPage
+    });
+    
+    if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+      console.log('[Observer] Loading next page...');
+      fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  useEffect(() => {
+    const element = observerTarget.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleIntersection, {
+      threshold: 0.1,
+      rootMargin: '200px', // Increased margin to load earlier
+    });
+
+    observer.observe(element);
+    console.log('[Observer] Observer set up');
+
+    return () => {
+      if (element) {
+        observer.unobserve(element);
+        console.log('[Observer] Observer cleaned up');
+      }
+    };
+  }, [handleIntersection]);
+
+  if (isLoading) {
+    return (
+      <Center h="200px">
+        <Spinner size="xl" />
+      </Center>
+    );
+  }
+
+  if (error instanceof Error) {
+    return (
+      <Center h="200px">
+        <Text color="red.500">{error.message}</Text>
+      </Center>
+    );
+  }
+
+  // Combine all products from all pages
+  const allProducts = data?.pages.flatMap(page => page.data) ?? [];
+  const uniqueProducts = [...new Map(allProducts.map(product => [product.id, product])).values()];
+
+  return (
+    <Container maxW="container.xl" py={8}>
+      <Grid templateColumns="repeat(auto-fill, minmax(250px, 1fr))" gap={6}>
+        {uniqueProducts.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </Grid>
+      
+      {/* Loading indicator */}
+      {isFetchingNextPage && (
+        <Center py={4}>
+          <Spinner />
+        </Center>
+      )}
+
+      {/* Debug info */}
+      <Box mt={4} p={4} bg="gray.50" borderRadius="md" fontSize="sm" color="gray.600">
+        <Text>Total Products: {uniqueProducts.length}</Text>
+        <Text>Pages Loaded: {data?.pages.length}</Text>
+        <Text>Has More: {hasNextPage ? 'Yes' : 'No'}</Text>
+        <Text>Currently Loading: {isFetchingNextPage ? 'Yes' : 'No'}</Text>
+        {data?.pages[0] && (
+          <>
+            <Text>Current Page: {data.pages[data.pages.length - 1].current_page}</Text>
+            <Text>Last Page: {data.pages[0].last_page}</Text>
+          </>
+        )}
+      </Box>
+
+      {/* Intersection Observer target */}
+      <div 
+        ref={observerTarget} 
+        style={{ height: '20px', margin: '20px 0' }}
+        data-testid="intersection-observer-target"
+      />
+    </Container>
   );
 }
