@@ -1,7 +1,8 @@
 'use client';
 
-import { Box, Container, Flex, Image, Text } from '@chakra-ui/react';
+import { Box, Container, Flex, Image, Text, HStack } from '@chakra-ui/react';
 import Navigation from './Navigation';
+import CartDrawer from './CartDrawer';
 import Link from 'next/link';
 
 export default function Header() {
@@ -16,7 +17,10 @@ export default function Header() {
               </Text>
             </Flex>
           </Link>
-          <Navigation />
+          <HStack spacing={4}>
+            <Navigation />
+            <CartDrawer />
+          </HStack>
         </Flex>
       </Container>
     </Box>
