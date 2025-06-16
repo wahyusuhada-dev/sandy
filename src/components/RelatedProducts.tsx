@@ -26,7 +26,7 @@ interface ProductResponse {
   total: number;
 }
 
-export default function RelatedProducts({ 
+function RelatedProducts({ 
   categoryId, 
   currentProductId, 
   priceRange 
@@ -128,9 +128,10 @@ export default function RelatedProducts({
             <SwiperSlide key={product.id}>
               <ProductCard product={product} />
             </SwiperSlide>
-          ))}
-        </Swiper>
+          ))}        </Swiper>
       </Box>
     </Box>
   );
 }
+
+export default RelatedProducts;
