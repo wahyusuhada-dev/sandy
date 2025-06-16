@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const apiUrl = `${API_BASE_URL}/api/v1/products/${params.id}`;
-    console.log('Fetching product details from:', apiUrl);
+    console.log('[API] Fetching product details from:', apiUrl);
 
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -17,13 +17,31 @@ export async function GET(
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[API] Error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
       throw new Error(`API responded with status: ${response.status}`);
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    console.log('[API] Product detail response:', data);
+    
+    // Transform the response to ensure consistent structure
+    const transformedData = {
+      ...data,
+      images: data.images || {
+        images_id: null,
+        image_path: null,
+        is_primary: null
+      }
+    };
+
+    return NextResponse.json(transformedData);
   } catch (error) {
-    console.error('Error fetching product details:', error);
+    console.error('[API] Error fetching product details:', error);
     return NextResponse.json(
       { error: 'Failed to fetch product details' },
       { status: 500 }

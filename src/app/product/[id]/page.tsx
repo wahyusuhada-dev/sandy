@@ -34,17 +34,21 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
   const toast = useToast();
-
-  const { data: product, isLoading, error } = useQuery<Product>({
+  const { data: productResponse, isLoading, error } = useQuery({
     queryKey: ['product', productId],
     queryFn: async () => {
       const response = await fetch(`/api/products/${productId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch product');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Product detail response:', data);
+      return data;
     },
   });
+
+  // Handle different response structures
+  const product = productResponse?.data || productResponse;
 
   if (isLoading) {
     return (
@@ -61,6 +65,10 @@ export default function ProductDetailPage() {
       </Center>
     );
   }
+
+  // Safely access nested properties
+  const categoryName = product.category?.category_name || 'Kategori tidak tersedia';
+  const brandName = product.brand?.brand_name || 'Brand tidak tersedia';
 
   const imageUrl = product.images?.image_path
     ? `${CDN_BASE_URL}/${product.images.image_path}`
@@ -97,10 +105,9 @@ export default function ProductDetailPage() {
         </GridItem>
         
         <GridItem>
-          <VStack align="start" spacing={6} h="full">
-            <VStack align="start" spacing={3}>
+          <VStack align="start" spacing={6} h="full">            <VStack align="start" spacing={3}>
               <Badge colorScheme="blue" fontSize="sm">
-                {product.category.category_name}
+                {categoryName}
               </Badge>
               <Text fontSize="3xl" fontWeight="bold" lineHeight="shorter">
                 {product.product_name}
@@ -109,7 +116,7 @@ export default function ProductDetailPage() {
                 Kode: {product.product_code}
               </Text>
               <Text fontSize="lg" color="gray.600">
-                Brand: {product.brand.brand_name}
+                Brand: {brandName}
               </Text>
             </VStack>
 
@@ -182,9 +189,8 @@ export default function ProductDetailPage() {
       </Grid>
 
       <Divider mb={8} />
-      
-      <RelatedProducts 
-        categoryId={product.category.id} 
+        <RelatedProducts 
+        categoryId={product.category?.id || 1} 
         currentProductId={product.id}
         priceRange={[product.selling_price * 0.7, product.selling_price * 1.3]}
       />
