@@ -3,6 +3,8 @@
 import { Box, Container, Grid, Heading, Spinner, Text, Center } from '@chakra-ui/react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import ProductCard from '@/components/ProductCard';
+import HeroSlider from '@/components/HeroSlider';
+import BrandSection from '@/components/BrandSection';
 import { Product } from '@/lib/api';
 import { useEffect, useRef, useCallback } from 'react';
 
@@ -121,21 +123,33 @@ export default function Home() {
   const uniqueProducts = [...new Map(allProducts.map(product => [product.id, product])).values()];
 
   return (
-    <Container maxW="container.xl" py={8}>
-      <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
-        {uniqueProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </Grid>
+    <Box>
+      {/* Hero Slider */}
+      <HeroSlider />
       
-      {/* Loading indicator */}
-      {isFetchingNextPage && (
-        <Center py={4}>
-          <Spinner />
-        </Center>
-      )}
+      {/* Brand Section */}
+      <BrandSection />
+      
+      {/* Products Section */}
+      <Container maxW="container.xl" py={8}>
+        <Heading size="lg" mb={8} textAlign="center">
+          Produk Pilihan
+        </Heading>
+        
+        <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
+          {uniqueProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </Grid>
+        
+        {/* Loading indicator */}
+        {isFetchingNextPage && (
+          <Center py={4}>
+            <Spinner />
+          </Center>
+        )}
 
-      {/* Debug info */}
+        {/* Debug info */}
       <Box mt={4} p={4} bg="gray.50" borderRadius="md" fontSize="sm" color="gray.600">
         <Text>Total Products: {uniqueProducts.length}</Text>
         <Text>Pages Loaded: {data?.pages.length}</Text>
@@ -147,14 +161,15 @@ export default function Home() {
             <Text>Last Page: {data.pages[0].last_page}</Text>
           </>
         )}
-      </Box>
+        </Box>
 
-      {/* Intersection Observer target */}
-      <div 
-        ref={observerTarget} 
-        style={{ height: '20px', margin: '20px 0' }}
-        data-testid="intersection-observer-target"
-      />
-    </Container>
+        {/* Intersection Observer target */}
+        <div 
+          ref={observerTarget} 
+          style={{ height: '20px', margin: '20px 0' }}
+          data-testid="intersection-observer-target"
+        />
+      </Container>
+    </Box>
   );
 }
