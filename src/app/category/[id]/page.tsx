@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { Box, Container, Grid, Heading, Spinner, Text, Center } from '@chakra-ui/react';
 import { useQuery } from '@tanstack/react-query';
-import ProductCard from '@/components/ProductCard';
+import ProductCard from '../../../components/ProductCard';
 
 export default function CategoryPage() {
   const params = useParams();

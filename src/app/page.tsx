@@ -122,7 +122,7 @@ export default function Home() {
 
   return (
     <Container maxW="container.xl" py={8}>
-      <Grid templateColumns="repeat(auto-fill, minmax(250px, 1fr))" gap={6}>
+      <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
         {uniqueProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
